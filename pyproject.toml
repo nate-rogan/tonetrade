@@ -33,18 +33,12 @@ pytest = "*"
 pre-commit = "*"
 pandas = ">=3.0"
 matplotlib = ">=3.11"
-
-[tool.pixi.feature.prep.dependencies]
 yfinance = ">=1.0"
 fredapi = ">=0.5"
 google-cloud-bigquery = ">=3.25"
 db-dtypes = ">=1.3"
 transformers = ">=5.0"
 pytorch-cpu = ">=2.5"
-
-[tool.pixi.environments]
-default = { solve-group = "default" }
-prep = { features = ["prep"], solve-group = "default" }
 
 [tool.pixi.pypi-dependencies]
 tonetrade = { path = ".", editable = true }

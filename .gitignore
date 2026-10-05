@@ -13,6 +13,8 @@ venv/
 .env
 .env.local
 
+data/raw/
+
 # OS
 .DS_Store
 Thumbs.db
