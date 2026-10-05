@@ -1,0 +1,87 @@
+[project]
+name = "tonetrade"
+version = "0.1.0"
+description = "Trading research based on macro indicators as well as tone in news articles"
+readme = "README.md"
+requires-python = ">=3.12"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/tonetrade"]
+
+[tool.pixi.workspace]
+channels = ["conda-forge"]
+platforms = ["win-64", "linux-64", "osx-arm64"]
+
+[tool.pixi.dependencies]
+python = ">=3.12,<3.13"
+numpy = ">=1.26"
+scipy = ">=1.12"
+scikit-learn = ">=1.4"
+xgboost = ">=2.0"
+httpx = ">=0.27"
+stamina = ">=24.3"
+python-dotenv = ">=1.0"
+msgspec = ">=0.18"
+structlog = ">=25.0"
+ipykernel = ">=7.4"
+ruff = "*"
+pytest = "*"
+pre-commit = "*"
+
+
+[tool.pixi.pypi-dependencies]
+tonetrade = { path = ".", editable = true }
+
+
+[tool.pixi.tasks]
+# --- Quality ---
+lint = "pre-commit run --all-files"
+test = "pytest"
+check = { depends-on = ["lint", "test"] }
+
+[tool.ruff]
+# https://docs.astral.sh/ruff/settings/
+preview = true
+target-version = "py312"
+line-length = 88
+
+[tool.ruff.lint]
+# https://docs.astral.sh/ruff/linter
+select = ["E", "W", "F", "I", "UP", "B", "SIM", "RUF", "D"]
+ignore = [
+    "E501",  # line too long; ruff format handels code length
+    "D203",  # one-blank-line-before-class (conflicts with D211)
+    "D213",  # multi-line-summary-second-line (conflicts with D212)
+    "D100",  # missing module docstring (optional everywhere)
+    "D104",  # missing docstring in public package
+    "D107",  # missing docstring in __init__
+]
+
+[tool.ruff.format]
+# https://docs.astral.sh/ruff/formatter/#configuration
+preview = true
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["D"]  # tests are self-documenting via test names
+"src/tonetrade/**/__init__.py" = ["D"]  # init files are pure re-exports
+"src/tonetrade/**/*.py" = ["D102", "D105", "D106"]  # methods/dunders/nested classes optional
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.isort]
+order-by-type = false
+lines-after-imports = 2
+
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+addopts = "-v"

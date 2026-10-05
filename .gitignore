@@ -1,0 +1,27 @@
+__pycache__/
+*.py[cod]
+*$py.class
+
+.pytest_cache/
+.ruff_cache/
+.pixi/
+
+*.egg-info/
+.venv/
+venv/
+
+.env
+.env.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local-only notes
+_ignore/
+
+# Claude Code local settings (per-user, not committed)
+.claude/settings.local.json
+
+# Logs
+*.log
