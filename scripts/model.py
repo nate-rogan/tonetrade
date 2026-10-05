@@ -6,7 +6,7 @@ This script is intended for testing the model functionality within the ToneTrade
 
 # %%
 # Import necessary modules and functions for testing the model.
-from tonetrade.data import fetch_text_test
+from tonetrade.sources import fetch_text_test
 
 
 # %%

@@ -1,10 +1,10 @@
 """
-Unit tests for the ToneTrade data module.
-This module contains unit tests for verifying the functionality of the data access
+Unit tests for the ToneTrade sources module.
+This module contains unit tests for verifying the functionality of the data source
 functions in the ToneTrade project.
 """
 
-from tonetrade.data import fetch_text_test
+from tonetrade.sources import fetch_text_test
 
 
 def test_fetch_text_test() -> None:
