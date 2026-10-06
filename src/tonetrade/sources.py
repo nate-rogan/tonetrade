@@ -9,6 +9,8 @@ import pandas as pd
 import yfinance as yf
 from fredapi import Fred
 
+import tonetrade as tt
+
 
 def fetch_prices(tickers: dict[str, str], start: str, end: str) -> pd.DataFrame:
     """Fetch adjusted daily closes from Yahoo Finance.
@@ -84,3 +86,21 @@ def fetch_fred_first_release(series_id: str) -> pd.DataFrame:
     )
     first = releases.sort_values("release_date").drop_duplicates("date", keep="first")
     return first.set_index("date").sort_index()[["release_date", "value"]]
+
+
+def fetch_gpr_data():
+    """Fetch GPR (Geo Political Risk) data.
+
+    Returns:
+        A pandas DataFrame indexed by date, with relevant GPR columns.
+    """
+    # Implement the logic to fetch GPR data here.
+    df = pd.read_csv(
+        tt.constants.GPR_DATA_SOURCE,
+        usecols=list(tt.constants.GPR_SERIES.values()),
+        thousands=",",
+    )
+    df["date"] = pd.to_datetime(df["date"])
+    df.rename(columns={v: k for k, v in tt.constants.GPR_SERIES.items()}, inplace=True)
+    df.set_index("date", inplace=True)
+    return df

@@ -37,8 +37,7 @@ def build_market_data() -> pd.DataFrame:
 # %% Build Headlines
 def build_headlines() -> pd.DataFrame:
     """Returns headlines as a pandas DataFrame."""
-    # Implement the logic to build headlines here.
-    pass
+    return tt.sources.fetch_gpr_data()
 
 
 # %% Build Features
@@ -52,4 +51,7 @@ def build_features() -> pd.DataFrame:
 market = build_market_data()
 market.plot(subplots=True, figsize=(12, 12))
 
+geo = build_headlines()
+geo.head()
+geo.plot(subplots=True, figsize=(12, 12))
 # %%

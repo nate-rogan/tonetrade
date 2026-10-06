@@ -17,13 +17,41 @@ Daily data from 2023-01-01 to today (fetched from 2021-10-01 so rolling windows 
 | CPI (CPIAUCSL) | FRED / ALFRED | 12-month % change from first-release index levels |
 | Unemployment rate (UNRATE) | FRED / ALFRED | First-release level |
 | 10y–2y Treasury spread (T10Y2Y) | FRED | Daily, known the next business day |
-| News headlines | GDELT via BigQuery | Two themes: geopolitical / defence, and AI (planned) |
-| Headline tone | FinBERT or GDELT's own tone (to be decided) | One value per theme per day (planned) |
+| Geopolitical Risk Index, daily (GPRD, GPRD_ACT, GPRD_THREAT) | Caldara & Iacoviello, snapshot in `data/data_gpr_daily_recent.csv` | News-based; known the next business day |
 
 The grid is ITA's trading days. Monthly macro values are placed on the date they were
 first released, not their reference month, and carried forward. The yield spread is
-lagged a business day because FRED posts it after the close. Headlines will count toward
-day *t* only if published before that day's market close.
+lagged a business day because FRED posts it after the close, and so is the GPR index,
+since each day's value is built from that day's newspapers.
+
+### Geopolitical Risk (GPR) index
+
+The GPR index is based on searches of the archives of 10 newspapers: Chicago Tribune, the
+Daily Telegraph, Financial Times, The Globe and Mail, The Guardian, the Los Angeles Times,
+The New York Times, USA Today, The Wall Street Journal and The Washington Post. It counts
+the number of articles related to adverse geopolitical events in each newspaper as a share
+of the total number of news articles, scaled so that the 1985–2019 average is 100.
+
+The search is organised in eight categories: War Threats (1), Peace Threats (2), Military
+Buildups (3), Nuclear Threats (4), Terror Threats (5), Beginning of War (6), Escalation of
+War (7) and Terror Acts (8). Two subindexes are built from these: Geopolitical Threats
+(GPRT, categories 1–5) and Geopolitical Acts (GPRA, categories 6–8).
+
+| Column | Definition |
+| --- | --- |
+| `GPRD` | Daily GPR index: share of articles about adverse geopolitical events (all eight categories), 1985–2019 average = 100. A value of 150 means 50% more risk coverage than normal. |
+| `GPRD_ACT` | Daily Geopolitical Acts: articles about events that are happening, i.e. the beginning of a war, escalation of a war, or terror acts (categories 6–8). |
+| `GPRD_THREAT` | Daily Geopolitical Threats: articles about risks that haven't materialised, i.e. war, peace, military, nuclear and terror threats (categories 1–5). |
+
+- **Source:** Caldara, Dario and Matteo Iacoviello (2022), "Measuring Geopolitical Risk,"
+  *American Economic Review*, 112(4), pp. 1194–1225.
+- **Data:** daily file `data_gpr_daily_recent.xls`, downloaded from
+  <https://www.matteoiacoviello.com/gpr.htm> on 6 October 2026 (covers 1985-01-01 to
+  2026-10-05) and saved as `data/data_gpr_daily_recent.csv`.
+- **Licence:** Creative Commons BY. Used and redistributed here with credit to the source
+  and authors.
+- **Updates:** the daily file is updated every Monday. The latest values are preliminary
+  and can be revised, so the committed snapshot is what results in this repo use.
 
 ## Method
 
