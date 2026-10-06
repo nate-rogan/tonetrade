@@ -84,12 +84,3 @@ def fetch_fred_first_release(series_id: str) -> pd.DataFrame:
     )
     first = releases.sort_values("release_date").drop_duplicates("date", keep="first")
     return first.set_index("date").sort_index()[["release_date", "value"]]
-
-
-def fetch_text_test():
-    """Fetch a test text string.
-
-    Returns:
-        str: A test text string.
-    """
-    return "Test text data"

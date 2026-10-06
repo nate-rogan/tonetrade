@@ -48,6 +48,7 @@ tonetrade = { path = ".", editable = true }
 # --- Quality ---
 lint = "pre-commit run --all-files"
 test = "pytest"
+test-integration = "pytest -m integration"
 check = { depends-on = ["lint", "test"] }
 
 [tool.ruff]
@@ -91,4 +92,5 @@ lines-after-imports = 2
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = "test_*.py"
-addopts = "-v"
+addopts = "-v -m 'not integration'"  # integration tests: pixi run test-integration
+markers = ["integration: calls live external APIs (Yahoo, FRED); needs network and keys"]

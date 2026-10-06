@@ -8,21 +8,22 @@ Does media sentiment add information about defence equity returns (ITA), beyond 
 
 ## Data
 
-About three years of daily data (exact range TBD), built by `scripts/prep.py` into
-`data/features.csv`, which is committed so the model runs without any API keys.
+Daily data from 2023-01-01 to today (fetched from 2021-10-01 so rolling windows and CPI's
+12-month change have history), fetched and aligned by `scripts/model.py`.
 
 | Series | Source | Notes |
 | --- | --- | --- |
-| ITA, S&P 500, NASDAQ, Brent | Yahoo Finance (`yfinance`) | Daily closes |
-| CPI (CPIAUCSL) | FRED | 12-month % change computed from the index level |
-| Unemployment rate | FRED | Level |
-| 10y–2y Treasury spread | FRED | Daily |
-| News headlines | GDELT via BigQuery | Two themes: geopolitical / defence, and AI |
-| Headline tone | FinBERT, run locally on CPU | Aggregated to one value per theme per day |
+| ITA, S&P 500, NASDAQ, Brent (`BZ=F`) | Yahoo Finance (`yfinance`) | Adjusted daily closes |
+| CPI (CPIAUCSL) | FRED / ALFRED | 12-month % change from first-release index levels |
+| Unemployment rate (UNRATE) | FRED / ALFRED | First-release level |
+| 10y–2y Treasury spread (T10Y2Y) | FRED | Daily, known the next business day |
+| News headlines | GDELT via BigQuery | Two themes: geopolitical / defence, and AI (planned) |
+| Headline tone | FinBERT or GDELT's own tone (to be decided) | One value per theme per day (planned) |
 
-Monthly macro series are aligned to their release date, not their reference month, and
-forward-filled. Headlines count toward day *t* only if published before that day's market
-close.
+The grid is ITA's trading days. Monthly macro values are placed on the date they were
+first released, not their reference month, and carried forward. The yield spread is
+lagged a business day because FRED posts it after the close. Headlines will count toward
+day *t* only if published before that day's market close.
 
 ## Method
 
@@ -49,19 +50,17 @@ per-trade transaction cost, compared against buy-and-hold ITA. Reports cumulativ
 hit rate and number of trades. Underperforming buy-and-hold is a likely and acceptable
 result.
 
+## Running
 
-**Reproduce from the CSV** (no API keys):
+`scripts/model.py` is the whole pipeline: fetch, align, build features, train, backtest. It
+needs a FRED API key in `.env` (and, once headlines are added, Google Cloud credentials
+for BigQuery):
 
 ```bash
 pixi run python scripts/model.py
 ```
 
-**Rebuild the data** (needs a FRED API key in `.env` and Google Cloud credentials for
-BigQuery):
-
-```bash
-pixi run -e prep python scripts/prep.py
-```
+Or run it cell by cell in VS Code (see [Percent-format scripts](#percent-format-scripts)).
 
 **Daily signal** (planned): a scheduled GitHub Action fetches new data, produces the day's
 signal, and posts it as a comment on a long-lived issue.
@@ -70,7 +69,7 @@ signal, and posts it as a comment on a long-lived issue.
 
 - About three years of daily data is a small sample for a classifier.
 - Tone comes from headlines only, and GDELT's theme tagging is noisy.
-- FinBERT is trained on financial text, not geopolitical news.
+- Off-the-shelf tone (FinBERT or GDELT's lexicon tone) isn't trained on geopolitical news.
 - Oil and geopolitical tone are correlated, so their relative feature importance shouldn't
   be over-read.
 - The 10y–2y spread is market-priced, so it isn't independent of equities.
@@ -108,23 +107,23 @@ src/tonetrade/   package code
   series.py      the project's named series, indexed by the date each value became known
   utils.py       helpers, e.g. aligning series onto the daily grid
 scripts/
-  prep.py        builds the data: fetch, align, save
-  model.py       model experiments (percent-format cells)
-tests/unit/      pytest unit tests
-data/            committed CSV data (model inputs)
+  model.py       the end-to-end pipeline (percent-format cells)
+tests/
+  unit/          fast tests, no network
+  integration/   tests that call the live APIs (marked `integration`)
+data/            data files
 ```
 
 ## Percent-format scripts
 
-Files in `scripts/` (starting with `model.py`) are plain Python files split into cells with
-`# %%` markers:
+`scripts/model.py` is a plain Python file split into cells with `# %%` markers:
 
 ```python
 # %%
-from tonetrade.sources import fetch_text_test
+import tonetrade as tt
 
 # %%
-print(fetch_text_test())
+tt.series.prices().tail()
 ```
 
 With the Jupyter extension installed, VS Code shows **Run Cell** above each `# %%`
@@ -138,10 +137,12 @@ to the file — rerun the cells to reproduce them.
 
 ```bash
 pixi run lint    # pre-commit hooks on all files (ruff lint + format, whitespace, TOML/AST checks)
-pixi run test    # pytest
+pixi run test    # pytest, unit tests only (no network)
+pixi run test-integration  # tests marked `integration`, which call Yahoo and FRED
 pixi run check   # lint, then test
 ```
 
 ## Configuration
 
-Copy `.env.example` to `.env` and fill in any API keys. `.env` is gitignored.
+Copy `.env.example` to `.env` and set `FRED_API_KEY` (free from
+[FRED](https://fred.stlouisfed.org/docs/api/api_key.html)). `.env` is gitignored.
