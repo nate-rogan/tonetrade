@@ -18,7 +18,9 @@ def prices() -> pd.DataFrame:
     Returns:
         Closes indexed by trading date, one column per ticker name. Not gap-filled.
     """
-    return fetch_prices(constants.TICKERS, constants.FETCH_START, constants.END)
+    return fetch_prices(
+        constants.TICKERS, constants.FETCH_START_DATE, constants.END_DATE
+    )
 
 
 def cpi_yoy() -> pd.Series:
@@ -54,7 +56,9 @@ def yield_spread() -> pd.Series:
     Returns:
         Spread, indexed by the business day after its observation date.
     """
-    values = fetch_fred(constants.FRED_SERIES["yield_spread"], constants.FETCH_START)
+    values = fetch_fred(
+        constants.FRED_SERIES["yield_spread"], constants.FETCH_START_DATE
+    )
     return values.set_axis(values.index + pd.offsets.BDay(1))
 
 

@@ -17,3 +17,14 @@ def test_fetch_prices() -> None:
     )
     assert isinstance(result, pd.DataFrame)
     assert "ita" in result.columns
+
+
+# @pytest.mark.integration
+def test_fetch_gpr_data() -> None:
+    result = tt.sources.fetch_gpr_data()
+    print(result.iloc[:5])
+    assert isinstance(result, pd.DataFrame)
+    assert "gprd" in result.columns
+    assert "gprd_act" in result.columns
+    assert "gprd_threat" in result.columns
+    assert "date" in result.index.names
