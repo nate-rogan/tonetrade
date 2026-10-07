@@ -24,8 +24,6 @@ scikit-learn = ">=1.4"
 xgboost = ">=2.0"
 httpx = ">=0.27"
 stamina = ">=24.3"
-plotly = ">=5.15"
-nbformat = ">=4.2.0"
 msgspec = ">=0.18"
 structlog = ">=25.0"
 ipykernel = ">=7.4"
@@ -39,6 +37,8 @@ google-cloud-bigquery = ">=3.25"
 db-dtypes = ">=1.3"
 transformers = ">=5.0"
 pytorch-cpu = ">=2.5"
+jupytext = ">=1.19.5,<2"
+nbconvert = ">=7.17.1,<8"
 
 
 
@@ -52,12 +52,15 @@ lint = "pre-commit run --all-files"
 test = "pytest"
 test-integration = "pytest -m integration"
 check = { depends-on = ["lint", "test"] }
+# --- Notebook ---
+notebook = "jupytext --to ipynb --set-kernel - --execute scripts/model.py"
 
 [tool.ruff]
 # https://docs.astral.sh/ruff/settings/
 preview = true
 target-version = "py312"
 line-length = 88
+extend-exclude = ["*.ipynb"]  # generated from scripts/model.py by jupytext
 
 [tool.ruff.lint]
 # https://docs.astral.sh/ruff/linter
