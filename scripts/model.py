@@ -1,57 +1,103 @@
-"""ToneTrade model script as a percent-format testing script.
+"""ToneTrade model script in percent-format (# %%) cells.
 
-This script is intended for testing the model functionality within the ToneTrade project using percent-format cells.
-For simplicity, this script focuses on building and visualizing market data.
-
-lru_cache is used to cache the results of  data access functions like build_market_data.
+Builds prices, GPR features and labels, fits XGBoost and a logistic baseline with
+walk-forward evaluation, and backtests the signal against buy-and-hold ITA.
 """
 
-# %% Import necessary modules and functions for testing the model.
-
-from functools import lru_cache
+# %% Imports and config
+from itertools import product
 
 import pandas as pd
-from dotenv import load_dotenv
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import classification_report
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+from xgboost import XGBClassifier
 
 import tonetrade as tt
 
 
-load_dotenv()
+pd.options.plotting.backend = "plotly"
 
 
-# %% Build Market Data
-@lru_cache
-def build_market_data() -> pd.DataFrame:
-    """Returns market data as a pandas DataFrame."""
-    closes = tt.series.prices()
-    grid = closes.index[closes[tt.constants.TARGET].notna()]
-
-    # Fill short gaps, e.g. Brent on UK holidays.
-    market = closes.loc[grid].ffill(limit=3)
-
-    for name, fetch in tt.series.MACRO.items():
-        market[name] = tt.utils.align_to_grid(fetch(), grid)
-    return market
+# %% Market data and features
+market = tt.features.build_market_data()
+features = tt.features.build_features(market)
+features.plot(subplots=True, figsize=(12, 12), backend="matplotlib")
 
 
-# %% Build Headlines
-def build_headlines() -> pd.DataFrame:
-    """Returns headlines as a pandas DataFrame."""
-    return tt.sources.fetch_gpr_data()
+# %% Data set: features + label, warm-up trimmed
+feature_cols = list(features)
+data = features.assign(label=tt.features.build_target(market["ita"]))
+data = data.loc[tt.constants.START_DATE :].dropna(subset=feature_cols)
+labels = data["label"]
+returns = market["ita"].pct_change()  # t-1 -> t, as backtest expects
 
 
-# %% Build Features
-def build_features() -> pd.DataFrame:
-    """Returns features as a pandas DataFrame."""
-    # Implement the logic to build features here.
-    pass
+# %% Data checks: first date, rows, NaNs, label balance
+print(data.index[0], len(data), data[feature_cols].isna().sum().sum())
+print(labels.value_counts(dropna=False, normalize=True).round(2))  # NaN = flat
+print(labels.groupby(labels.index.year).value_counts().unstack())
 
 
-# %% Build Model
-market = build_market_data()
-market.plot(subplots=True, figsize=(12, 12))
+# %% Models and feature sets
+MODELS = {
+    "xgb": XGBClassifier(
+        max_depth=3,
+        n_estimators=200,
+        learning_rate=0.05,
+        subsample=0.8,
+        colsample_bytree=0.8,
+        random_state=0,
+    ),
+    "logit": make_pipeline(StandardScaler(), LogisticRegression(max_iter=1000)),
+}
 
-geo = build_headlines()
-geo.head()
-geo.plot(subplots=True, figsize=(12, 12))
-# %%
+GPR = ["gprd_act", "gprd_threat"]
+FEATURE_SETS = {
+    "all": feature_cols,
+    "no_gpr": [c for c in feature_cols if c not in GPR],
+}
+
+
+# %% Evaluate: every model x feature set
+rows, runs = [], {}
+for (m, model), (f, cols) in product(MODELS.items(), FEATURE_SETS.items()):
+    proba = tt.evaluate.walk_forward(data, model, cols)
+    res = tt.evaluate.backtest(tt.evaluate.to_positions(proba), returns)
+    runs[m, f] = proba, res
+    rows.append({
+        "model": m,
+        "features": f,
+        **tt.evaluate.summarise(res, proba, labels),
+    })
+
+results = pd.DataFrame(rows).set_index(["model", "features"])
+print(results.round(3))
+
+
+# %% Cumulative returns vs buy-and-hold
+shown = [("xgb", "all"), ("logit", "all"), ("xgb", "no_gpr")]
+cum = pd.DataFrame({
+    f"{m}/{f}": (1 + runs[m, f][1]["strategy_returns"]).cumprod() for m, f in shown
+})
+cum["buy_hold"] = (1 + runs["xgb", "all"][1]["buy_hold"]).cumprod()
+cum.plot()
+
+
+# %% Classification report: xgb, all features, labelled days (0.5 cut)
+proba, res = runs["xgb", "all"]
+actual = labels.reindex(proba.index)
+labelled = actual.notna()
+predicted = (proba[labelled] > 0.5).astype(float)
+print(classification_report(actual[labelled], predicted, target_names=["sell", "buy"]))
+
+
+# %% Robustness: one day of execution delay
+delayed = tt.evaluate.backtest(tt.evaluate.to_positions(proba), returns, lag=1)
+print(
+    pd.DataFrame({
+        "lag 0": tt.evaluate.summarise(res, proba, labels),
+        "lag 1": tt.evaluate.summarise(delayed, proba, labels),
+    }).round(3)
+)
