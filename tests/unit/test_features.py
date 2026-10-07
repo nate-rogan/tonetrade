@@ -1,4 +1,4 @@
-"""Unit tests for tonetrade.features (read the committed GPR snapshot; no network)."""
+"""Unit tests for tonetrade.features: GPR timing and no look-ahead in features."""
 
 import pandas as pd
 
@@ -12,3 +12,12 @@ def test_geo_risk_is_known_the_day_after() -> None:
 
     expected = raw.rolling(7).mean().loc[day]
     assert geo.loc[day + pd.Timedelta(days=1)].equals(expected)
+
+
+def test_features_use_no_data_after_t(market: pd.DataFrame) -> None:
+    # Features computed on data up to t must match the full-history features at t.
+    cut = 500
+    full = tt.features.build_features(market)
+    truncated = tt.features.build_features(market.iloc[:cut])
+
+    pd.testing.assert_frame_equal(truncated, full.iloc[:cut])
