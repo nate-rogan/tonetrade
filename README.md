@@ -1,5 +1,7 @@
 # ToneTrade
 
+[![CI](https://github.com/nate-rogan/tonetrade/actions/workflows/ci.yml/badge.svg)](https://github.com/nate-rogan/tonetrade/actions/workflows/ci.yml)
+
 Does geopolitical risk in the news help time defence stocks?
 
 **Question:** does the Geopolitical Risk index (GPR acts and threats) add information about
