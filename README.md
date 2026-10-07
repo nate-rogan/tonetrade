@@ -12,7 +12,8 @@ buy-and-hold ITA is invested about 91% of the time, so it's close to buy-and-hol
 
 That negative result is the point of the exercise, not a failure of it. Finding that a
 plausible signal is noise is a result, and it takes the same process as finding one that
-works: a hypothesis stated in advance, a baseline, out-of-sample testing, an ablation,
+works: a hypothesis stated in advance, a baseline, out-of-sample testing with no
+look-ahead, an ablation,
 costs and a robustness check. That process is what this repo builds, and it can be reused
 to test the next idea.
 
@@ -21,11 +22,12 @@ method, results tables, charts and findings.
 
 ## Data
 
-Daily, 2009 to today, on ITA's trading days. No API keys are needed.
+Daily, 2009 to 6 October 2026, on ITA's trading days. Both sources are committed
+snapshots, so the analysis runs offline and reproduces exactly.
 
 | Series | Source |
 | --- | --- |
-| ITA, Brent crude (`BZ=F`) | Yahoo Finance, adjusted daily closes, fetched live |
+| ITA, Brent crude (`BZ=F`) | Yahoo Finance adjusted daily closes, snapshot in `data/prices.csv` |
 | GPR acts and threats, daily | Caldara & Iacoviello, snapshot in `data/data_gpr_daily_recent.csv` |
 
 **GPR** counts articles about adverse geopolitical events in 10 major US and UK newspapers,
@@ -48,6 +50,7 @@ dropped because it didn't help and needed a FRED API key; see commit `b48a993`.
 pixi install                # environment from pixi.lock, tonetrade installed editable
 pixi run pre-commit install # lint and format on each commit
 pixi run notebook           # run the pipeline and regenerate scripts/model.ipynb
+pixi run snapshot           # refresh data/prices.csv from Yahoo (see data/README.md)
 ```
 
 `scripts/model.py` is the pipeline and the file to edit; the notebook is generated from it
