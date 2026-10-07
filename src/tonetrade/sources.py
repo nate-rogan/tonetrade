@@ -38,24 +38,22 @@ def fetch_prices(tickers: dict[str, str], start: str, end: str) -> pd.DataFrame:
     return closes[list(tickers)].rename_axis(index="date", columns=None)
 
 
-def snapshot_prices() -> None:
-    """Fetch prices for ``TICKERS`` up to ``END_DATE`` and save the price snapshot.
+def prices(refresh: bool = False) -> pd.DataFrame:
+    """Daily closes for ``TICKERS``, read from the committed snapshot.
 
     Yahoo's adjusted closes differ slightly from one request to the next, so the model
-    reads this committed snapshot instead of fetching live. Run via ``pixi run snapshot``.
-    """
-    closes = fetch_prices(
-        constants.TICKERS, constants.FETCH_START_DATE, constants.END_DATE
-    )
-    closes.to_csv(constants.PRICES_SNAPSHOT)
+    reads a committed snapshot instead of fetching live.
 
-
-def load_prices() -> pd.DataFrame:
-    """Load the committed price snapshot.
+    Args:
+        refresh: Refetch from Yahoo up to ``END_DATE`` and overwrite the snapshot first
+            (``pixi run snapshot``).
 
     Returns:
         Adjusted daily closes indexed by date, one column per name in ``TICKERS``.
     """
+    if refresh:
+        start, end = constants.FETCH_START_DATE, constants.END_DATE
+        fetch_prices(constants.TICKERS, start, end).to_csv(constants.PRICES_SNAPSHOT)
     return pd.read_csv(constants.PRICES_SNAPSHOT, index_col="date", parse_dates=True)
 
 

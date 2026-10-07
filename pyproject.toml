@@ -42,7 +42,7 @@ test = "pytest"
 test-integration = "pytest -m integration"
 check = { depends-on = ["lint", "test"] }
 # --- Data and notebook ---
-snapshot = 'python -c "from tonetrade.sources import snapshot_prices; snapshot_prices()"'
+snapshot = 'python -c "from tonetrade.sources import prices; prices(refresh=True)"'
 notebook = "jupytext --to ipynb --set-kernel - --execute scripts/model.py"
 
 [tool.ruff]

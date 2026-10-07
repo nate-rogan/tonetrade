@@ -12,7 +12,7 @@ def test_fetch_gpr_data() -> None:
 
 
 def test_price_snapshot_covers_the_pinned_range() -> None:
-    prices = tt.sources.load_prices()
+    prices = tt.sources.prices()
     assert list(prices.columns) == list(tt.constants.TICKERS)
     assert prices.index[0] >= pd.Timestamp(tt.constants.FETCH_START_DATE)
     assert prices.index[-1] < pd.Timestamp(tt.constants.END_DATE)

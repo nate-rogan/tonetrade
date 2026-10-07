@@ -32,7 +32,7 @@ def build_market_data() -> pd.DataFrame:
         DataFrame indexed by trading day with one column per price and GPR
         series. Cached, so treat it as read-only.
     """
-    closes = sources.load_prices()
+    closes = sources.prices()
     grid = closes.index[closes[constants.TARGET].notna()]
 
     # Fill short gaps, e.g. Brent on UK holidays.
