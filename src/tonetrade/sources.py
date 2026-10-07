@@ -35,10 +35,7 @@ def fetch_prices(tickers: dict[str, str], start: str, end: str) -> pd.DataFrame:
     if missing:
         raise ValueError(f"No price data for: {missing}")
 
-    closes = closes[list(tickers)]
-    closes.index.name = "date"
-    closes.columns.name = None
-    return closes
+    return closes[list(tickers)].rename_axis(index="date", columns=None)
 
 
 def fetch_gpr_data() -> pd.DataFrame:

@@ -15,9 +15,7 @@ TICKERS = {
     "brent": "BZ=F",  # Brent crude front-month futures
 }
 
-GPR_DATA_SOURCE = (
-    Path(__file__).parent.parent.parent / "data" / "data_gpr_daily_recent.csv"
-)
+GPR_DATA_SOURCE = Path(__file__).parents[2] / "data" / "data_gpr_daily_recent.csv"
 
 GPR_SERIES = {
     "date": "date",  # Observation date

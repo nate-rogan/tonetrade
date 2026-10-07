@@ -28,10 +28,8 @@ features.plot(subplots=True, figsize=(12, 12), backend="matplotlib")
 
 # %% Data set: features + label, warm-up trimmed
 feature_cols = list(features)
-data = features.assign(label=tt.features.build_target(market["ita"])).loc[
-    tt.constants.START_DATE :
-]
-data = data.dropna(subset=feature_cols)
+data = features.assign(label=tt.features.build_target(market["ita"]))
+data = data.loc[tt.constants.START_DATE :].dropna(subset=feature_cols)
 labels = data["label"]
 returns = market["ita"].pct_change()  # t-1 -> t, as backtest expects
 
@@ -91,13 +89,8 @@ cum.plot()
 proba, res = runs["xgb", "all"]
 actual = labels.reindex(proba.index)
 labelled = actual.notna()
-print(
-    classification_report(
-        actual[labelled],
-        (proba[labelled] > 0.5).astype(float),
-        target_names=["sell", "buy"],
-    )
-)
+predicted = (proba[labelled] > 0.5).astype(float)
+print(classification_report(actual[labelled], predicted, target_names=["sell", "buy"]))
 
 
 # %% Robustness: one day of execution delay
