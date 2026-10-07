@@ -1,15 +1,14 @@
-"""Unit tests for tonetrade.features."""
+"""Unit tests for tonetrade.features (read the committed GPR snapshot; no network)."""
 
 import pandas as pd
 
-from tonetrade.features import _align_to_grid
+import tonetrade as tt
 
 
-def test_value_is_only_used_from_the_date_it_became_known() -> None:
-    values = pd.Series([1.0], index=pd.DatetimeIndex(["2024-01-10"]))
-    grid = pd.DatetimeIndex(["2024-01-09", "2024-01-10", "2024-01-11"])
+def test_geo_risk_is_known_the_day_after() -> None:
+    raw = tt.sources.fetch_gpr_data()
+    geo = tt.features.geo_risk()
+    day = raw.index[10]
 
-    aligned = _align_to_grid(values, grid)
-
-    assert pd.isna(aligned["2024-01-09"])
-    assert aligned["2024-01-10":].tolist() == [1.0, 1.0]
+    expected = raw.rolling(7).mean().loc[day]
+    assert geo.loc[day + pd.Timedelta(days=1)].equals(expected)

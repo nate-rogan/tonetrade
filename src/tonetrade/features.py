@@ -7,44 +7,26 @@ import pandas as pd
 from tonetrade import constants, sources
 
 
-def _align_to_grid(values: pd.Series, grid: pd.DatetimeIndex) -> pd.Series:
-    """Carry values forward onto a daily grid from the date each became known.
-
-    Args:
-        values: Values indexed by the date they became known (e.g. release date). If two
-            values share a date, the later one in ``values`` wins.
-        grid: Target dates, e.g. trading days.
-
-    Returns:
-        ``values`` reindexed to ``grid``. Each grid date gets the latest value known on or
-        before it, and dates before the first value are NaN.
-    """
-    known = values.sort_index(kind="stable")
-    known = known[~known.index.duplicated(keep="last")]
-    return known.reindex(grid, method="ffill")
-
-
 def geo_risk() -> pd.DataFrame:
-    """GPR acts and threats, 7-day mean, indexed by the next business day.
+    """GPR acts and threats, 7-day mean, indexed by the day after.
 
     Each day's value is built from that day's newspapers, so it isn't known until the
-    next trading day. Smoothing runs on calendar days first, so a Monday carries the
-    weekend's news.
+    next day. Smoothing runs on calendar days, so a Monday carries the weekend's news.
 
     Returns:
-        Smoothed acts and threats, indexed by the business day they became known.
+        Smoothed acts and threats, indexed by the calendar day they became known.
     """
     gpr = sources.fetch_gpr_data()
     smooth = gpr.rolling(7).mean()  # calendar days, window ends at t
-    return smooth.set_axis(smooth.index + pd.offsets.BDay(1))
+    return smooth.shift(1, freq="D")
 
 
 @lru_cache
 def build_market_data() -> pd.DataFrame:
     """Build the daily market panel on the target's trading-day grid.
 
-    Prices are forward-filled for up to 3 days. GPR is aligned to the grid from
-    the day each value became known.
+    Prices are forward-filled for up to 3 days. Each trading day gets the latest
+    GPR value known by then.
 
     Returns:
         DataFrame indexed by trading day with one column per price and GPR
@@ -58,11 +40,7 @@ def build_market_data() -> pd.DataFrame:
     # Fill short gaps, e.g. Brent on UK holidays.
     market = closes.loc[grid].ffill(limit=3)
 
-    geo = geo_risk()
-    for name in geo:
-        market[name] = _align_to_grid(geo[name], grid)
-
-    return market
+    return market.join(geo_risk().reindex(grid, method="ffill"))
 
 
 def build_features(market: pd.DataFrame) -> pd.DataFrame:
