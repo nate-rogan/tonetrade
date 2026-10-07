@@ -67,6 +67,19 @@ pixi run test-integration  # tests that call Yahoo Finance
 pixi run check             # lint, then test
 ```
 
+## Code size
+
+196 source lines of code across `src/tonetrade/` and `scripts/model.py`, as counted by
+[radon](https://radon.readthedocs.io/) (SLOC):
+
+```bash
+pixi exec radon raw -s src/tonetrade scripts/model.py
+```
+
+SLOC excludes blank lines, `#` comments (including the notebook's markdown cells) and
+docstrings. Tests, CI config and data aren't counted. Tools that count docstrings as code
+report about 300 lines.
+
 ## Project layout
 
 ```text
