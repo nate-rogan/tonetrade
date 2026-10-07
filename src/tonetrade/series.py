@@ -9,18 +9,11 @@ timing rule for each series lives here, next to the series.
 import pandas as pd
 
 from tonetrade import constants
-from tonetrade.sources import fetch_fred, fetch_fred_first_release, fetch_prices
-
-
-def prices() -> pd.DataFrame:
-    """Adjusted daily closes for every ticker in ``constants.TICKERS``.
-
-    Returns:
-        Closes indexed by trading date, one column per ticker name. Not gap-filled.
-    """
-    return fetch_prices(
-        constants.TICKERS, constants.FETCH_START_DATE, constants.END_DATE
-    )
+from tonetrade.sources import (
+    fetch_fred,
+    fetch_fred_first_release,
+    fetch_gpr_data,
+)
 
 
 def cpi_yoy() -> pd.Series:
@@ -60,6 +53,13 @@ def yield_spread() -> pd.Series:
         constants.FRED_SERIES["yield_spread"], constants.FETCH_START_DATE
     )
     return values.set_axis(values.index + pd.offsets.BDay(1))
+
+
+def geo_risk() -> pd.DataFrame:
+    """GPR acts and threats, 7-day mean, indexed by the next business day."""
+    gpr = fetch_gpr_data()[["gprd_act", "gprd_threat"]]
+    smooth = gpr.rolling(7).mean()  # calendar days, window ends at t
+    return smooth.set_axis(smooth.index + pd.offsets.BDay(1))
 
 
 # Column name -> function, for every macro series. Each is aligned the same way.

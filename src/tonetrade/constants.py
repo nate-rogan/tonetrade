@@ -4,8 +4,8 @@ from datetime import date
 from pathlib import Path
 
 
-START_DATE = "2023-01-01"
-FETCH_START_DATE = "2021-10-01"  # warm-up for CPI 12-month change and 60-day windows
+START_DATE = "2007-08-01"
+FETCH_START_DATE = "2009-01-01"  # warm-up for CPI 12-month change and 60-day windows
 END_DATE = date.today().isoformat()
 
 TARGET = "ita"  # defines the trading-day grid and the prediction target
@@ -33,3 +33,9 @@ GPR_SERIES = {
     "gprd_act": "GPRD_ACT",  # Actual Geo Political Risk acts, war, terror, etc.
     "gprd_threat": "GPRD_THREAT",  # Threats, potential conflicts, geopolitical tensions
 }
+
+# Backtesting and trading configuration
+FIRST_TEST_YEAR = 2015
+HORIZON = 5  # forward horizon, trading days
+BUY, SELL, COST = 0.55, 0.45, 0.0005
+SHORT = 0.0  # 0 = flat on sell, -1 = short (decisions.md)

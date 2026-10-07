@@ -9,7 +9,7 @@ import pandas as pd
 import yfinance as yf
 from fredapi import Fred
 
-import tonetrade as tt
+import tonetrade.constants as constants
 
 
 def fetch_prices(tickers: dict[str, str], start: str, end: str) -> pd.DataFrame:
@@ -96,11 +96,11 @@ def fetch_gpr_data():
     """
     # Implement the logic to fetch GPR data here.
     df = pd.read_csv(
-        tt.constants.GPR_DATA_SOURCE,
-        usecols=list(tt.constants.GPR_SERIES.values()),
+        constants.GPR_DATA_SOURCE,
+        usecols=list(constants.GPR_SERIES.values()),
         thousands=",",
     )
     df["date"] = pd.to_datetime(df["date"])
-    df.rename(columns={v: k for k, v in tt.constants.GPR_SERIES.items()}, inplace=True)
+    df.rename(columns={v: k for k, v in constants.GPR_SERIES.items()}, inplace=True)
     df.set_index("date", inplace=True)
     return df
