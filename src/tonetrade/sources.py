@@ -1,4 +1,4 @@
-"""Data sources: Yahoo Finance prices and the committed GPR snapshot."""
+"""Data sources: Yahoo Finance prices, and the committed price and GPR snapshots."""
 
 import pandas as pd
 import yfinance as yf
@@ -36,6 +36,25 @@ def fetch_prices(tickers: dict[str, str], start: str, end: str) -> pd.DataFrame:
         raise ValueError(f"No price data for: {missing}")
 
     return closes[list(tickers)].rename_axis(index="date", columns=None)
+
+
+def prices(refresh: bool = False) -> pd.DataFrame:
+    """Daily closes for ``TICKERS``, read from the committed snapshot.
+
+    Yahoo's adjusted closes differ slightly from one request to the next, so the model
+    reads a committed snapshot instead of fetching live.
+
+    Args:
+        refresh: Refetch from Yahoo up to ``END_DATE`` and overwrite the snapshot first
+            (``pixi run snapshot``).
+
+    Returns:
+        Adjusted daily closes indexed by date, one column per name in ``TICKERS``.
+    """
+    if refresh:
+        start, end = constants.FETCH_START_DATE, constants.END_DATE
+        fetch_prices(constants.TICKERS, start, end).to_csv(constants.PRICES_SNAPSHOT)
+    return pd.read_csv(constants.PRICES_SNAPSHOT, index_col="date", parse_dates=True)
 
 
 def fetch_gpr_data() -> pd.DataFrame:

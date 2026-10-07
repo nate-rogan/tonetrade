@@ -3,6 +3,7 @@
 import numpy as np
 import pandas as pd
 from sklearn.base import clone
+from sklearn.metrics import roc_auc_score
 
 from tonetrade import constants
 
@@ -88,12 +89,14 @@ def summarise(res: pd.DataFrame, proba: pd.Series, labels: pd.Series) -> dict:
         labels: Actual labels (1 = buy, 0 = sell, NaN = flat), indexed by day.
 
     Returns:
-        Dict of buy precision, hit rate, trade count, exposure, and total
-        strategy and buy-and-hold returns.
+        Dict of ROC AUC and buy precision (on labelled days), hit rate, trade count,
+        exposure, and total strategy and buy-and-hold returns.
     """
     position, strategy = res["position"], res["strategy_returns"]
     actual = labels.reindex(proba.index)
+    labelled = actual.notna()
     return {
+        "auc": roc_auc_score(actual[labelled], proba[labelled]),
         "precision_buy": actual[proba > constants.BUY].mean(),  # mean skips NaN = flat
         "hit_rate": (strategy[position != 0] > 0).mean(),
         "trades": position.diff().abs().fillna(position.abs()).sum(),

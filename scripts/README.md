@@ -31,9 +31,13 @@ jupytext --to ipynb --set-kernel - --execute scripts/model.py
 - `--set-kernel -` uses the pixi environment's Python as the kernel.
 - `--execute` runs every cell top to bottom, so the saved outputs always match the code.
 
-Running it fetches prices live from Yahoo Finance (network needed, no API keys) and takes
-a minute or two. Because prices are fetched live, XGBoost numbers can shift slightly
-between runs.
+It reads only committed data (`data/prices.csv` and the GPR snapshot), so it runs offline
+in a minute or two and gives identical results every time.
+
+To extend the data to newer dates, see [`data/README.md`](../data/README.md).
+
+For text-only edits, `jupytext --to ipynb --update scripts/model.py` updates the markdown
+and keeps the existing outputs.
 
 ## Running interactively
 

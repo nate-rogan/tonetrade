@@ -16,8 +16,8 @@
 #   outcome.
 #
 # This notebook is generated from `scripts/model.py` with `pixi run notebook`; edit
-# the script, not the notebook (see `scripts/README.md`). Prices are fetched live from
-# Yahoo Finance, so XGBoost numbers can shift slightly between runs.
+# the script, not the notebook (see `scripts/README.md`). It reads committed snapshots
+# of prices (to 6 October 2026) and GPR, so rerunning it reproduces these results exactly.
 
 # %% Imports and config
 """ToneTrade model script in percent-format (# %%) cells.
@@ -37,6 +37,9 @@ from sklearn.preprocessing import StandardScaler
 from xgboost import XGBClassifier
 
 import tonetrade as tt
+
+
+pd.set_option("display.width", 120)
 
 
 # %% [markdown]
@@ -115,6 +118,8 @@ FEATURE_SETS = {
 #
 # How to read the table:
 #
+# - `auc`: ROC AUC on labelled days, how well the probabilities rank buy days above
+#   sell days. 0.5 is chance; it doesn't depend on any threshold.
 # - `precision_buy`: of labelled days the model called a buy, the share that were
 #   buys. Compare it with the **base rate** printed below it; matching the base rate
 #   means no skill.
@@ -190,25 +195,24 @@ print(
 # %% [markdown]
 # ## Findings
 #
-# From the run on 2026-10-07 (out of sample, 2015 to October 2026). Exact numbers move
-# slightly between runs because prices are fetched live; the conclusions don't.
+# Out of sample, January 2015 to 6 October 2026, on the committed data snapshots.
 #
 # **The hypothesis is not supported.**
 #
-# 1. **No predictive skill.** Buy precision is 0.58 to 0.59 for every model, the same
-#    as the base rate (0.584, the share of labelled days that are buys). The
-#    classification report's macro average is about 0.50, coin-flip level.
-# 2. **GPR doesn't help.** Removing it leaves precision unchanged and raises total
-#    return for both models: across runs, xgb goes from about 1.0-1.1 to 1.5-1.9 and
-#    logit from about 1.7-1.8 to 3.6-3.7. Those gaps are noise rather than evidence
-#    against GPR: the models are equally unskilled, and one exit before a strong year
-#    swings the total a lot.
-# 3. **No timing edge.** Trading a day late barely changes XGBoost's result: the total
-#    moves by a few points either way, and in some runs it improves. A real edge would
-#    lose value with the delay; random timing doesn't.
-# 4. **Buy-and-hold wins, except where the strategy barely trades.** ITA returned about
-#    308% over the period. Only logit without GPR beats it, and it's invested about 91%
-#    of the time, so it's close to buy-and-hold itself.
+# 1. **No predictive skill.** AUC is 0.49 to 0.52 for every model, where 0.5 is chance.
+#    Buy precision (0.58 to 0.59) matches the base rate (0.584, the share of labelled
+#    days that are buys), and the classification report's macro average is 0.49.
+# 2. **GPR doesn't help.** Without GPR, AUC and precision are no worse, and total return
+#    is higher for both models (xgb 1.07 to 1.87, logit 1.81 to 3.62). Those gaps in
+#    total return are noise rather than evidence against GPR: all four runs are at
+#    chance, and one exit before a strong year swings the total a lot.
+# 3. **Nothing for a delay to erode.** Trading a day late leaves AUC and precision
+#    unchanged and lowers XGBoost's total from 1.07 to 0.98. With no ranking skill to
+#    begin with, this check can't reveal a timing edge; it's a safeguard that matters
+#    once a model does show skill.
+# 4. **Buy-and-hold wins, except where the strategy barely trades.** ITA returned 308%
+#    over the period. Only logit without GPR beats it, and it's invested 91% of the
+#    time, so it's close to buy-and-hold itself.
 #
 # **Limits.** GPR measures how much the news covers geopolitical risk, not its tone, and
 # its level drifts upwards from 2022. Labels overlap because positions are re-decided
