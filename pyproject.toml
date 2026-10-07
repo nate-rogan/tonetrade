@@ -1,7 +1,7 @@
 [project]
 name = "tonetrade"
 version = "0.1.0"
-description = "Trading research based on macro indicators as well as tone in news articles"
+description = "Does geopolitical risk in the news add information about defence equity returns?"
 readme = "README.md"
 requires-python = ">=3.12"
 
@@ -24,7 +24,6 @@ scikit-learn = ">=1.4"
 xgboost = ">=2.0"
 httpx = ">=0.27"
 stamina = ">=24.3"
-python-dotenv = ">=1.0"
 plotly = ">=5.15"
 nbformat = ">=4.2.0"
 msgspec = ">=0.18"
@@ -36,7 +35,6 @@ pre-commit = "*"
 pandas = ">=3.0"
 matplotlib = ">=3.11"
 yfinance = ">=1.0"
-fredapi = ">=0.5"
 google-cloud-bigquery = ">=3.25"
 db-dtypes = ">=1.3"
 transformers = ">=5.0"
@@ -97,4 +95,4 @@ lines-after-imports = 2
 testpaths = ["tests"]
 python_files = "test_*.py"
 addopts = "-v -m 'not integration'"  # integration tests: pixi run test-integration
-markers = ["integration: calls live external APIs (Yahoo, FRED); needs network and keys"]
+markers = ["integration: calls Yahoo Finance; needs network"]

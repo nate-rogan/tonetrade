@@ -1,6 +1,6 @@
 """ToneTrade model script in percent-format (# %%) cells.
 
-Builds market data, features and labels, fits XGBoost and a logistic baseline with
+Builds prices, GPR features and labels, fits XGBoost and a logistic baseline with
 walk-forward evaluation, and backtests the signal against buy-and-hold ITA.
 """
 
@@ -59,8 +59,6 @@ GPR = ["gprd_act", "gprd_threat"]
 FEATURE_SETS = {
     "all": feature_cols,
     "no_gpr": [c for c in feature_cols if c not in GPR],
-    "no_act": [c for c in feature_cols if c != "gprd_act"],
-    "no_threat": [c for c in feature_cols if c != "gprd_threat"],
 }
 
 

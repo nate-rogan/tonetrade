@@ -1,13 +1,7 @@
-"""Clients for external data sources: Yahoo Finance and FRED/ALFRED.
-
-These functions fetch any ticker or series by ID. The project's named series, with their
-transforms and timing, are in ``tonetrade.series``.
-
-"""
+"""Data sources: Yahoo Finance prices and the committed GPR snapshot."""
 
 import pandas as pd
 import yfinance as yf
-from fredapi import Fred
 
 import tonetrade.constants as constants
 
@@ -47,60 +41,17 @@ def fetch_prices(tickers: dict[str, str], start: str, end: str) -> pd.DataFrame:
     return closes
 
 
-def fetch_fred(series_id: str, start: str) -> pd.Series:
-    """Fetch the latest values of a FRED series.
-
-    Use this for series that aren't revised, such as daily market rates. The API key is
-    read from the ``FRED_API_KEY`` environment variable.
-
-    Args:
-        series_id: FRED series ID, e.g. ``"T10Y2Y"``.
-        start: First observation date, ISO format.
+def fetch_gpr_data() -> pd.DataFrame:
+    """Load the daily GPR snapshot committed in ``data/``.
 
     Returns:
-        Values indexed by observation date, with missing days dropped.
+        GPR acts and threats, indexed by observation date.
     """
-    values = Fred().get_series(series_id, observation_start=start)
-    return values.dropna().rename(series_id)
-
-
-def fetch_fred_first_release(series_id: str) -> pd.DataFrame:
-    """Fetch each observation's first-release value and release date from ALFRED.
-
-    Using the first release, not today's revised value, means a value is only ever paired
-    with the date it was actually published. The API key is read from the
-    ``FRED_API_KEY`` environment variable.
-
-    Args:
-        series_id: FRED series ID, e.g. ``"CPIAUCSL"``.
-
-    Returns:
-        Indexed by observation date, with columns ``release_date`` and ``value``.
-        Observations FRED reports as missing (``"."``) have a NaN value.
-    """
-    releases = Fred().get_series_all_releases(series_id)
-    releases = releases.assign(
-        date=pd.to_datetime(releases["date"]),
-        release_date=pd.to_datetime(releases["realtime_start"]),
-        value=pd.to_numeric(releases["value"], errors="coerce"),
-    )
-    first = releases.sort_values("release_date").drop_duplicates("date", keep="first")
-    return first.set_index("date").sort_index()[["release_date", "value"]]
-
-
-def fetch_gpr_data():
-    """Fetch GPR (Geo Political Risk) data.
-
-    Returns:
-        A pandas DataFrame indexed by date, with relevant GPR columns.
-    """
-    # Implement the logic to fetch GPR data here.
-    df = pd.read_csv(
+    gpr = pd.read_csv(
         constants.GPR_DATA_SOURCE,
         usecols=list(constants.GPR_SERIES.values()),
+        index_col="date",
+        parse_dates=["date"],
         thousands=",",
     )
-    df["date"] = pd.to_datetime(df["date"])
-    df.rename(columns={v: k for k, v in constants.GPR_SERIES.items()}, inplace=True)
-    df.set_index("date", inplace=True)
-    return df
+    return gpr.rename(columns={v: k for k, v in constants.GPR_SERIES.items()})

@@ -3,12 +3,8 @@
 from functools import lru_cache
 
 import pandas as pd
-from dotenv import load_dotenv
 
-from tonetrade import constants, series, sources
-
-
-load_dotenv()
+from tonetrade import constants, sources
 
 
 def _align_to_grid(values: pd.Series, grid: pd.DatetimeIndex) -> pd.Series:
@@ -28,16 +24,31 @@ def _align_to_grid(values: pd.Series, grid: pd.DatetimeIndex) -> pd.Series:
     return known.reindex(grid, method="ffill")
 
 
+def geo_risk() -> pd.DataFrame:
+    """GPR acts and threats, 7-day mean, indexed by the next business day.
+
+    Each day's value is built from that day's newspapers, so it isn't known until the
+    next trading day. Smoothing runs on calendar days first, so a Monday carries the
+    weekend's news.
+
+    Returns:
+        Smoothed acts and threats, indexed by the business day they became known.
+    """
+    gpr = sources.fetch_gpr_data()
+    smooth = gpr.rolling(7).mean()  # calendar days, window ends at t
+    return smooth.set_axis(smooth.index + pd.offsets.BDay(1))
+
+
 @lru_cache
 def build_market_data() -> pd.DataFrame:
     """Build the daily market panel on the target's trading-day grid.
 
-    Prices are forward-filled for up to 3 days. Macro and geopolitical-risk
-    series are aligned to the grid by release date.
+    Prices are forward-filled for up to 3 days. GPR is aligned to the grid from
+    the day each value became known.
 
     Returns:
-        DataFrame indexed by trading day with one column per price, macro and
-        GPR series. Cached, so treat it as read-only.
+        DataFrame indexed by trading day with one column per price and GPR
+        series. Cached, so treat it as read-only.
     """
     closes = sources.fetch_prices(
         constants.TICKERS, constants.FETCH_START_DATE, constants.END_DATE
@@ -47,10 +58,7 @@ def build_market_data() -> pd.DataFrame:
     # Fill short gaps, e.g. Brent on UK holidays.
     market = closes.loc[grid].ffill(limit=3)
 
-    for name, fetch in series.MACRO.items():
-        market[name] = _align_to_grid(fetch(), grid)
-
-    geo = series.geo_risk()
+    geo = geo_risk()
     for name in geo:
         market[name] = _align_to_grid(geo[name], grid)
 
@@ -62,16 +70,14 @@ def build_features(market: pd.DataFrame) -> pd.DataFrame:
 
     Args:
         market: Output of ``build_market_data``. Needs ``ita``, ``brent`` and the
-            macro/GPR columns.
+            GPR columns.
 
     Returns:
-        DataFrame with macro/GPR levels, 5/20/60-day ITA and Brent returns,
+        DataFrame with GPR levels, 5/20/60-day ITA and Brent returns,
         20-day ITA volatility, and ITA's distance from its 50-day mean.
     """
     ita_close, brent_close = market["ita"], market["brent"]
-    features = market[
-        ["cpi_yoy", "unemployment", "yield_spread", "gprd_act", "gprd_threat"]
-    ].copy()
+    features = market[["gprd_act", "gprd_threat"]].copy()
     for window in (5, 20, 60):
         features[f"ita_ret_{window}"] = ita_close.pct_change(window)
         features[f"brent_ret_{window}"] = brent_close.pct_change(window)

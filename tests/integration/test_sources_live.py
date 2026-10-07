@@ -1,6 +1,6 @@
 """
 Integration tests for the ToneTrade sources module.
-These call the live external APIs, so they need network access (and keys for FRED).
+These call Yahoo Finance, so they need network access.
 Run them with: pixi run test-integration
 """
 
