@@ -50,7 +50,6 @@ tonetrade = { path = ".", editable = true }
 # --- Quality ---
 lint = "pre-commit run --all-files"
 test = "pytest"
-test-integration = "pytest -m integration"
 check = { depends-on = ["lint", "test"] }
 # --- Notebook ---
 notebook = "jupytext --to ipynb --set-kernel - --execute scripts/model.py"
@@ -97,5 +96,4 @@ lines-after-imports = 2
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = "test_*.py"
-addopts = "-v -m 'not integration'"  # integration tests: pixi run test-integration
-markers = ["integration: calls Yahoo Finance; needs network"]
+addopts = "-v"
